@@ -26,17 +26,32 @@
     <dependency>
       <groupId>com.google.code.findbugs</groupId>
       <artifactId>jsr305</artifactId>
-      <version>2.0.1</version>
+      <version>LATEST</version>
     </dependency>
     <dependency>
       <groupId>com.ryanharter.auto.value</groupId>
       <artifactId>auto-value-gson</artifactId>
-      <version>0.4.6</version>
+      <version>LATEST</version>
     </dependency>
     <dependency>
       <groupId>com.dampcake</groupId>
       <artifactId>gson-immutable</artifactId>
-      <version>1.2</version>
+      <version>LATEST</version>
+    </dependency>
+    <dependency>
+      <groupId>org.jgrapht</groupId>
+      <artifactId>jgrapht-core</artifactId>
+      <version>LATEST</version>
+    </dependency>
+    <dependency>
+      <groupId>org.jgrapht</groupId>
+      <artifactId>jgrapht</artifactId>
+      <version>LATEST</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+      <version>LATEST</version>
     </dependency>
   </dependencies>
 </project>

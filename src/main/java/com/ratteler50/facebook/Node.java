@@ -9,7 +9,7 @@ import com.google.gson.annotations.SerializedName;
 import javax.annotation.Nullable;
 
 @AutoValue
-public abstract class Node {
+abstract class Node {
 
   @SerializedName("id")
   abstract String getId();
@@ -23,10 +23,11 @@ public abstract class Node {
   @SerializedName("userName")
   abstract String getUserName();
 
-  @SerializedName("dataUrl")
   @Nullable
+  @SerializedName("dataUrl")
   abstract String getDataUrl();
 
+  @SuppressWarnings("WeakerAccess")
   @GsonTypeAdapter(Node.class)
   public static TypeAdapter<Node> typeAdapter(Gson gson) {
     return new AutoValue_Node.GsonTypeAdapter(gson);

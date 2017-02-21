@@ -8,14 +8,15 @@ import com.google.gson.annotations.SerializedName;
 import com.ryanharter.auto.value.gson.GsonTypeAdapter;
 
 @AutoValue
-public abstract class Link {
+abstract class Link {
 
   @SerializedName("source")
-  abstract Long getSource();
+  abstract int getSource();
 
   @SerializedName("target")
-  abstract Long getTarget();
+  abstract int getTarget();
 
+  @SuppressWarnings("WeakerAccess")
   @GsonTypeAdapter(Link.class)
   public static TypeAdapter<Link> typeAdapter(Gson gson) {
     return new AutoValue_Link.GsonTypeAdapter(gson);
