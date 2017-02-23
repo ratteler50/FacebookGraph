@@ -9,17 +9,21 @@ import static org.jgrapht.alg.scoring.PageRank.DAMPING_FACTOR_DEFAULT;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableListMultimap;
-import java.io.FileNotFoundException;
+import com.google.common.collect.ImmutableListMultimap.Builder;
 import java.io.PrintWriter;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
+import org.jgrapht.GraphPath;
 import org.jgrapht.UndirectedGraph;
 import org.jgrapht.alg.BronKerboschCliqueFinder;
 import org.jgrapht.alg.ConnectivityInspector;
 import org.jgrapht.alg.scoring.PageRank;
+import org.jgrapht.alg.shortestpath.FloydWarshallShortestPaths;
+import org.jgrapht.alg.util.Pair;
 import org.jgrapht.graph.DefaultEdge;
 
 class Algorithms {
@@ -95,20 +99,6 @@ class Algorithms {
         .forEach(writer::println);
   }
 
-  void clique(String name) {
-    BronKerboschCliqueFinder<Node, DefaultEdge> cliqueFinder =
-        new BronKerboschCliqueFinder<>(graph);
-    cliqueFinder
-        .getAllMaximalCliques()
-        .stream()
-        .map(GET_SORTED_NAMES_FROM_NODES)
-        .filter(names -> names.stream().anyMatch(s -> s.toLowerCase().contains(name.toLowerCase())))
-        .sorted(comparingInt(List<String>::size).reversed())
-        .peek(set -> writer.println(set.size()))
-        .forEach(writer::println);
-    writer.flush();
-  }
-
   void connectivity() {
     writer.println("---------------<CONNECTED_SUBGRAPHS>---------------");
     writeConnectivity();
@@ -126,11 +116,57 @@ class Algorithms {
         .forEach(writer::println);
   }
 
-  void removeDisconnectedNodes(int size) {
-    new ConnectivityInspector<>(graph)
-        .connectedSets()
-        .stream()
-        .filter(set -> set.size() < size)
-        .forEach(set -> set.forEach(graph::removeVertex));
+  void shortestPathLengths() {
+    writer.println("---------------<SHORTEST_PATH_LENGTH>---------------");
+    writeShortestPathLengths();
+    writer.println("---------------</SHORTEST_PATH_LENGTH>---------------");
+    writer.flush();
+  }
+
+  private void writeShortestPathLengths() {
+    ImmutableListMultimap<Pair<String, String>, Integer> pathLengths = getShortestPathsMap(graph);
+    pathLengths.entries().stream().sorted(getShortestPathComparator()).forEach(writer::println);
+  }
+
+  private static Comparator<Entry<Pair<String, String>, Integer>> getShortestPathComparator() {
+    Comparator<Entry<Pair<String, String>, Integer>> comparingLength =
+        comparingInt(Entry::getValue);
+    Comparator<Entry<Pair<String, String>, ?>> comparingSourceLastName =
+        comparing(entry -> entry.getKey().getFirst(), COMPARING_LAST_NAME);
+    Comparator<Entry<Pair<String, String>, ?>> comparingSourceFirstName =
+        comparing(entry -> entry.getKey().getFirst());
+    Comparator<Entry<Pair<String, String>, ?>> comparingSinkLastName =
+        comparing(entry -> entry.getKey().getSecond(), COMPARING_LAST_NAME);
+    Comparator<Entry<Pair<String, String>, ?>> comparingSinkFirstName =
+        comparing(entry -> entry.getKey().getSecond());
+    return comparingLength
+        .reversed()
+        .thenComparing(comparingSourceLastName)
+        .thenComparing(comparingSourceFirstName)
+        .thenComparing(comparingSinkLastName)
+        .thenComparing(comparingSinkFirstName);
+  }
+
+  private static ImmutableListMultimap<Pair<String, String>, Integer> getShortestPathsMap(
+      UndirectedGraph<Node, DefaultEdge> graph) {
+    FloydWarshallShortestPaths<Node, DefaultEdge> floydWarshallShortestPaths =
+        new FloydWarshallShortestPaths<>(graph);
+    Builder<Pair<String, String>, Integer> pathLengths = ImmutableListMultimap.builder();
+    for (Node source : graph.vertexSet()) {
+      for (Node sink : graph.vertexSet()) {
+        if (!source.equals(sink)
+            && Comparator.comparing(Node::getName, COMPARING_LAST_NAME)
+                    .thenComparing(Node::getName)
+                    .compare(source, sink)
+                <= 0) {
+          int shortestPathLength =
+              Optional.ofNullable(floydWarshallShortestPaths.getPath(source, sink))
+                  .map(GraphPath::getLength)
+                  .orElse(0);
+          pathLengths.put(Pair.of(source.getName(), sink.getName()), shortestPathLength);
+        }
+      }
+    }
+    return pathLengths.build();
   }
 }
